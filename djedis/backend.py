@@ -45,8 +45,8 @@ class RedisCache(BaseCache):
     def delete_many(self, *args, **kwargs):
         return self.client.delete_many(*args, **kwargs)
 
-    def has_key(self, *args, **kwargs):
-        return self.client.has_key(*args, **kwargs)
+    def has_key(self, key, version=None):
+        return self.client.has_key(key, version=version)
 
     def keys(self, *args, **kwargs):
         return self.client.keys(*args, **kwargs)

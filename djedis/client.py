@@ -79,3 +79,8 @@ class ShardClient(object):
 
     def delete_pattern(self, pattern):
         return self.delete_many(self.keys(pattern))
+
+    def has_key(self, key, version=None):
+        key = make_key(key, version=version)
+        client = self.get_client(key)
+        return client.get(key) is not None
