@@ -25,7 +25,10 @@ class ShardClient(object):
     def _decode(self, value):
         """For get"""
         if value is not None:
-            value = snappy.decompress(value)
+            try:
+                value = snappy.decompress(value)
+            except snappy.UncompressError:
+                pass
             try:
                 value = int(value)
             except (ValueError, TypeError):
