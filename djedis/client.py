@@ -1,7 +1,8 @@
 import cPickle as pickle
+from uhashring import HashRing
 from .pool import RedisPoolFactory
 from .settings import DEFAULT_TIMEOUT
-from .utils import make_key, chose_index, integer_types
+from .utils import make_key, integer_types
 
 
 class ShardClient(object):
@@ -12,12 +13,13 @@ class ShardClient(object):
         self._server = servers
         self._params = params
         self._pool = RedisPoolFactory().connect(servers)
+        self._hashring = HashRing(nodes=servers)
 
     def get_client(self, key):
         return self._pool[self._get_pool_index(key)]
 
     def _get_pool_index(self, key):
-        return chose_index(key, self._pool.keys())
+        return self._hashring.get_key(key)
 
     def _decode(self, value):
         """For get"""

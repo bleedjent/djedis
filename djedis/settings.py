@@ -8,7 +8,7 @@ except RuntimeError:
 
 DEFAULT_CACHES = {
     'default': {
-        'BACKEND': 'djedis.cache.backend.RedisCache',
+        'BACKEND': 'djedis.backend.RedisCache',
         'LOCATION': [
             'redis://localhost:6379/0',
             'redis://localhost:6379/2',

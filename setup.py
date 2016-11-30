@@ -15,5 +15,7 @@ setup(
     install_requires=[
         'redis',
         'django',
+        'hiredis',
+        'uhashring',
     ]
 )
