@@ -24,10 +24,6 @@ class RedisCache(BaseCache):
             self._client = ShardClient(self._server, self._params, self)
         return self._client
 
-    @property
-    def client(self):
-        return self.client()
-
     def get(self, key, default=None, version=None):
         return self.client.get(key, default=default, version=version)
 

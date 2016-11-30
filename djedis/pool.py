@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from redis.connection import ConnectionPool
+from redis.connection import ConnectionPool, HiredisParser
 from redis.client import StrictRedis
 
 from .settings import CACHES
@@ -8,7 +8,7 @@ from .settings import CACHES
 class RedisPoolFactory(object):
     _instance = None
 
-    __pools = None
+    __pools = {}
 
     def __new__(cls, *args, **kwargs):
         if not isinstance(cls._instance, cls):
@@ -16,21 +16,24 @@ class RedisPoolFactory(object):
         return cls._instance
 
     def __init__(self):
-        if self.__pools is None:
-            self.__pools = self._create_pools()
-
-    @staticmethod
-    def _create_pool(backend):
-        return ConnectionPool.from_url(url=backend['LOCATION'])
-
-    def _create_pools(self):
-        return {key: self._create_pool(backend) for key, backend in CACHES.items()}
-
-    def get_pool(self, index):
-        return self.__pools[index]
-
-    def connect(self, index):
-        return StrictRedis(connection_pool=self.get_pool(index))
+        if not self.__pools:
+            self._create_pools()
 
     def __getitem__(self, item):
         return self.__pools[item]
+
+    @staticmethod
+    def _create_pool(_url, **kwargs):
+        return ConnectionPool.from_url(url=_url, parser_class=HiredisParser, **kwargs)
+
+    def _create_pools(self):
+        for backend in CACHES.values():
+            for _url in backend.get('LOCATION', []):
+                if _url not in self.__pools:
+                    self.__pools[_url] = self._create_pool(_url)
+
+    def get_pools(self, urls):
+        return [self[index] for index in urls]
+
+    def connect(self, urls):
+        return {url: StrictRedis(connection_pool=self[url]) for url in urls}

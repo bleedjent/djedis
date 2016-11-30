@@ -1,76 +1,80 @@
+import cPickle as pickle
 from .pool import RedisPoolFactory
 from .settings import DEFAULT_TIMEOUT
-from .utils import make_key, chose_index
+from .utils import make_key, chose_index, integer_types
 
 
 class ShardClient(object):
+    _serializer = pickle
 
     def __init__(self, servers, params, backend):
         self._backend = backend
         self._server = servers
         self._params = params
-        self._pool = RedisPoolFactory()
-        self._allowed_pools_keys = self._pool.keys()
+        self._pool = RedisPoolFactory().connect(servers)
 
     def get_client(self, key):
-        return self._pool(self._get_pool_index(key))
+        return self._pool[self._get_pool_index(key)]
 
     def _get_pool_index(self, key):
-        return chose_index(key, self._allowed_pools_keys)
+        return chose_index(key, self._pool.keys())
+
+    def _decode(self, value):
+        """For get"""
+        if value is not None:
+            try:
+                value = int(value)
+            except (ValueError, TypeError):
+                value = self._serializer.loads(value)
+        return value
+
+    def _encode(self, value):
+        """For set"""
+        if value is not None:
+            if isinstance(value, bool) or not isinstance(value, integer_types):
+                return self._serializer.dumps(value)
+        return value
 
     # PUBLIC
-    def add(self, key, value, timeout=DEFAULT_TIMEOUT, version=None, client=None):
-        if client is None:
-            key = make_key(key, version=version)
-            client = self.get_client(key)
-
-        return client.add(key=key, value=value, version=version, client=client, timeout=timeout)
-
-    def set(self, key, value, timeout=DEFAULT_TIMEOUT, version=None, client=None, nx=False):
-        """
-        Persist a value to the cache, and set an optional expiration time.
-        """
-        if client is None:
-            key = make_key(key, version=version)
-            client = self.get_server(key)
-
-        return super(ShardClient, self).set(key=key, value=value,
-                                            timeout=timeout, version=version,
-                                            client=client, nx=nx)
-
-    def set_many(self, data, timeout=DEFAULT_TIMEOUT, version=None):
-        """
-        Set a bunch of values in the cache at once from a dict of key/value
-        pairs. This is much more efficient than calling set() multiple times.
-
-        If timeout is given, that timeout will be used for the key; otherwise
-        the default cache timeout will be used.
-        """
-        for key, value in data.items():
-            self.set(key, value, timeout, version=version)
+    def set(self, key, value, timeout=DEFAULT_TIMEOUT, version=None, nx=False, xx=False):
+        key = make_key(key, version=version)
+        client = self.get_client(key)
+        return client.set(key, self._encode(value), ex=timeout, nx=nx, xx=xx)
 
     def get(self, key, default=None, version=None):
         key = make_key(key, version=version)
         client = self.get_client(key)
-        return client.get(key=key, default=default, version=version)
-
-    def get_many(self, keys, version=None):
-        _result = []
-        for key in keys:
-            _result.append(self.get(key, version=version))
-        return _result
+        return self._decode(client.get(key))
 
     def delete(self, key, version=None):
         key = make_key(key, version=version)
         client = self.get_client(key)
-        return client.delete(key=key, version=version, client=client)
+        return client.delete(key, version=version)
+
+    #  batch commands
+    def set_many(self, data, timeout=DEFAULT_TIMEOUT, version=None):
+        for key, value in data.items():
+            self.set(key, value, timeout, version=version)
+
+    def get_many(self, keys, version=None):
+        _result = []
+        keys = tuple(make_key(key, version=version) for key in keys)
+        for client in self._pool.values():
+            _result.extend([self._decode(v) for v in client.mget(keys)])
+        return _result
 
     def delete_many(self, keys, version=None):
         res = 0
-        for key in keys:
-            res += self.delete(key, version=version)
+        keys = tuple(make_key(key, version=version) for key in keys)
+        for client in self._pool.values():
+            res += client.delete(*keys)
         return res
 
-    def delete_pattern(self, pattern):
-        return ''
+    def keys(self, pattern='*'):
+        _keys = set()
+        for client in self._pool.values():
+            _keys.update(client.keys(pattern))
+        return _keys
 
+    def delete_pattern(self, pattern):
+        return self.delete_many(self.keys(pattern))
