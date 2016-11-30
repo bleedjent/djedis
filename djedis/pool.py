@@ -22,6 +22,12 @@ class RedisPoolFactory(object):
     def __getitem__(self, item):
         return self.__pools[item]
 
+    def __contains__(self, item):
+        return item in self.__pools
+
+    def keys(self):
+        return self.__pools.keys()
+
     @staticmethod
     def _create_pool(_url, **kwargs):
         return ConnectionPool.from_url(url=_url, parser_class=HiredisParser, **kwargs)
