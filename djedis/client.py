@@ -19,7 +19,7 @@ class ShardClient(object):
         return self._pool[self._get_pool_index(key)]
 
     def _get_pool_index(self, key):
-        return self._hashring.get_key(key)
+        return self._hashring.get_node(key)
 
     def _decode(self, value):
         """For get"""
