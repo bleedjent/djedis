@@ -8,8 +8,7 @@ from .utils import make_key, integer_types
 class ShardClient(object):
     _serializer = pickle
 
-    def __init__(self, servers, params, backend):
-        self._backend = backend
+    def __init__(self, servers, params):
         self._server = servers
         self._params = params
         self._pool = RedisPoolFactory().connect(servers)

@@ -9,9 +9,9 @@ from djedis.client import ShardClient
 
 class RedisCache(BaseCache):
 
-    def __init__(self, server, params):
+    def __init__(self, servers, params):
         super(RedisCache, self).__init__(params)
-        self._server = server
+        self._servers = servers
         self._params = params
         self._client = None
 
@@ -21,7 +21,7 @@ class RedisCache(BaseCache):
         Lazy client connection property.
         """
         if self._client is None:
-            self._client = ShardClient(self._server, self._params, self)
+            self._client = ShardClient(self._servers, self._params, self)
         return self._client
 
     def get(self, key, default=None, version=None):
