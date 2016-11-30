@@ -1,9 +1,9 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='djedis',
     version='0.1',
-    packages=['cache',],
+    packages=find_packages(),
     url='',
     license='',
     author='Yura Revutskiy',
