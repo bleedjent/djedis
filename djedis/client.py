@@ -1,5 +1,7 @@
 import cPickle as pickle
+import snappy
 from uhashring import HashRing
+
 from .pool import RedisPoolFactory
 from .settings import DEFAULT_TIMEOUT
 from .utils import make_key, integer_types
@@ -23,6 +25,7 @@ class ShardClient(object):
     def _decode(self, value):
         """For get"""
         if value is not None:
+            value = snappy.decompress(value)
             try:
                 value = int(value)
             except (ValueError, TypeError):
@@ -33,7 +36,8 @@ class ShardClient(object):
         """For set"""
         if value is not None:
             if isinstance(value, bool) or not isinstance(value, integer_types):
-                return self._serializer.dumps(value)
+                value = self._serializer.dumps(value)
+            value = snappy.compress(str(value))
         return value
 
     # PUBLIC

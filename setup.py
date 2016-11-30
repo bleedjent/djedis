@@ -17,5 +17,6 @@ setup(
         'django',
         'hiredis',
         'uhashring',
+        'python-snappy',
     ]
 )
