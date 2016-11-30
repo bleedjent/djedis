@@ -3,8 +3,8 @@ from django.conf import settings
 from django.core.cache import cache
 settings.configure()
 
-from cache.settings import DEFAULT_CACHES
-from cache.backend import RedisCache
+from djedis.settings import DEFAULT_CACHES
+from djedis.backend import RedisCache
 
 settings['CACHES'] = DEFAULT_CACHES
 

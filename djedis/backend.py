@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 
 from django.core.cache.backends.base import BaseCache
 
-from cache.settings import DEFAULT_TIMEOUT
-from cache.client import ShardClient
+from djedis.settings import DEFAULT_TIMEOUT
+from djedis.client import ShardClient
 
 
 class RedisCache(BaseCache):

@@ -1,6 +1,6 @@
 from unittest import TestCase
-from cache.pool import RedisPoolFactory
-from cache.settings import CACHES, DEFAULT_CACHES
+from djedis.pool import RedisPoolFactory
+from djedis.settings import CACHES, DEFAULT_CACHES
 
 CACHES.update(DEFAULT_CACHES)
 

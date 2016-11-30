@@ -2,9 +2,9 @@
 from hashlib import md5
 from unittest import TestCase
 
-from cache.utils import make_key, chose_index
-from cache.pool import RedisPoolFactory
-from cache.settings import CACHES, DEFAULT_CACHES
+from djedis.utils import make_key, chose_index
+from djedis.pool import RedisPoolFactory
+from djedis.settings import CACHES, DEFAULT_CACHES
 
 CACHES.update(DEFAULT_CACHES)
 
