@@ -50,7 +50,7 @@ class ShardClient(object):
     def delete(self, key, version=None):
         key = make_key(key, version=version)
         client = self.get_client(key)
-        return client.delete(key, version=version)
+        return client.delete(*(key,))
 
     #  batch commands
     def set_many(self, data, timeout=DEFAULT_TIMEOUT, version=None):

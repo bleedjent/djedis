@@ -1,4 +1,5 @@
 import uuid
+import random
 from unittest import TestCase
 from djedis.client import ShardClient
 from djedis.settings import DEFAULT_CACHES
@@ -29,3 +30,8 @@ class ClientTestCase(TestCase):
     def test__set(self):
         self.assertTrue(any(self.client.set(key, 'test_value') for key in self.keys.keys()))
         self.assertTrue(any(self.client.get(key) == 'test_value' for key in self.keys.keys()))
+
+    def test__delete(self):
+        _delete_key = random.choice(self.keys.keys())
+        self.client.delete(_delete_key)
+        self.assertIsNone(self.client.get(_delete_key))
