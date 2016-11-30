@@ -45,7 +45,7 @@ class ShardClient(object):
     def get(self, key, default=None, version=None):
         key = make_key(key, version=version)
         client = self.get_client(key)
-        return self._decode(client.get(key))
+        return self._decode(client.get(key)) or default
 
     def delete(self, key, version=None):
         key = make_key(key, version=version)
