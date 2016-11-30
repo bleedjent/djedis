@@ -1,6 +1,10 @@
 from __future__ import unicode_literals
 from django.conf import settings
-settings.configure()
+
+try:
+    settings.configure()
+except RuntimeError:
+    pass
 
 DEFAULT_CACHES = {
     'default': {
