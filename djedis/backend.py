@@ -21,7 +21,7 @@ class RedisCache(BaseCache):
         Lazy client connection property.
         """
         if self._client is None:
-            self._client = ShardClient(self._servers, self._params, self)
+            self._client = ShardClient(self._servers, self._params)
         return self._client
 
     def get(self, key, default=None, version=None):
