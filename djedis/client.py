@@ -11,16 +11,20 @@ class ShardClient(object):
     _serializer = pickle
 
     def __init__(self, servers, params):
-        self._server = servers
+        self._servers = servers
         self._params = params
-        self._pool = RedisPoolFactory().connect(servers)
-        self._hashring = HashRing(nodes=servers)
+        self._pool = RedisPoolFactory().connect(self._servers)
+        self._hashring = None
+        if len(self._servers) > 1:
+            self._hashring = HashRing(nodes=servers)
 
     def get_client(self, key):
         return self._pool[self._get_pool_index(key)]
 
     def _get_pool_index(self, key):
-        return self._hashring.get_node(key)
+        if self._hashring:
+            return self._hashring.get_node(key)
+        return self._servers[0]
 
     @staticmethod
     def _can_compress(value):
