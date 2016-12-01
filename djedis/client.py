@@ -27,7 +27,7 @@ class ShardClient(object):
         return isinstance(value, bool) or not isinstance(value, integer_types)
 
     def _compress(self, value):
-        if self._can_compress(value) and value > DEFAULT_MIN_LENGTH_COMPRESS:
+        if self._can_compress(value) and len(value) > DEFAULT_MIN_LENGTH_COMPRESS:
             value = snappy.compress(str(value))
         return value
 
