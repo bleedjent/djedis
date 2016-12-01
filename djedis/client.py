@@ -3,7 +3,7 @@ import snappy
 from uhashring import HashRing
 
 from .pool import RedisPoolFactory
-from .settings import DEFAULT_TIMEOUT
+from .settings import DEFAULT_TIMEOUT, DEFAULT_MIN_LENGTH_COMPRESS
 from .utils import make_key, integer_types
 
 
@@ -22,25 +22,41 @@ class ShardClient(object):
     def _get_pool_index(self, key):
         return self._hashring.get_node(key)
 
+    @staticmethod
+    def _can_compress(value):
+        return isinstance(value, bool) or not isinstance(value, integer_types)
+
+    def _compress(self, value):
+        if self._can_compress(value) and value > DEFAULT_MIN_LENGTH_COMPRESS:
+            value = snappy.compress(str(value))
+        return value
+
+    def _decompress(self, value):
+        try:
+            value = snappy.decompress(value)
+        except snappy.UncompressError:
+            pass
+        return value
+
     def _decode(self, value):
         """For get"""
         if value is not None:
+            value = self._decompress(value)
             try:
-                value = snappy.decompress(value)
-            except snappy.UncompressError:
-                pass
-            try:
-                value = int(value)
-            except (ValueError, TypeError):
-                value = self._serializer.loads(value)
+                try:
+                    value = int(value)
+                except (ValueError, TypeError):
+                    value = self._serializer.loads(value)
+            except (Exception,):
+                return None
         return value
 
     def _encode(self, value):
         """For set"""
         if value is not None:
-            if isinstance(value, bool) or not isinstance(value, integer_types):
+            if self._can_compress(value):
                 value = self._serializer.dumps(value)
-            value = snappy.compress(str(value))
+                value = self._compress(value)
         return value
 
     # PUBLIC
