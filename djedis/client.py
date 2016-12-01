@@ -67,7 +67,7 @@ class ShardClient(object):
     def set(self, key, value, timeout=DEFAULT_TIMEOUT, version=None, nx=False, xx=False):
         key = make_key(key, version=version)
         client = self.get_client(key)
-        return client.set(key, self._encode(value), ex=timeout, nx=nx, xx=xx)
+        return client.set(key, str(self._encode(value)), ex=timeout, nx=nx, xx=xx)
 
     def get(self, key, default=None, version=None):
         key = make_key(key, version=version)
