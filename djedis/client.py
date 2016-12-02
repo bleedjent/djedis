@@ -1,7 +1,7 @@
 import cPickle as pickle
 import snappy
 
-from .pool import get_connection_factory
+from .pool import RedisPoolFactory
 from .settings import DEFAULT_TIMEOUT, DEFAULT_MIN_LENGTH_COMPRESS
 from .utils import make_key, integer_types
 from .hash_ring import HashRing
@@ -12,25 +12,25 @@ class ShardClient(object):
 
     def __init__(self, servers, params):
         self._servers = servers
+        if not isinstance(servers, list):
+            self._servers = [servers]
+
         self._params = params
 
-        self.connection_factory = get_connection_factory(options=self._params)
-        self._ring = HashRing(self._servers)
-        self._pool = self.connect()
+        self._pool_factory = RedisPoolFactory()
+        self._pool = {name: self._pool_factory.get_connect(name) for name in self._servers}
 
-    def connect(self):
-        connection_dict = {}
-        for name in self._servers:
-            connection_dict[name] = self.connection_factory.connect(name)
-        return connection_dict
-
-    def get_client(self, key):
-        name = self.get_server_name(key)
-        return self._pool[name]
+        self._ring = None
+        if len(self._servers) > 1:
+            self._ring = HashRing(self._servers)
 
     def get_server_name(self, key):
-        name = self._ring.get_node(key)
-        return name
+        if self._ring is not None:
+            return self._ring.get_node(key)
+        return self._servers[0]
+
+    def get_client(self, key):
+        return self._pool[self.get_server_name(key)]
 
     @staticmethod
     def _can_compress(value):
