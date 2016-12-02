@@ -1,45 +1,89 @@
-from __future__ import unicode_literals
+from redis import StrictRedis
 from redis.connection import ConnectionPool, HiredisParser
-from redis.client import StrictRedis
-
-from .settings import CACHES
 
 
-class RedisPoolFactory(object):
-    _instance = None
+class ConnectionFactory(object):
 
-    __pools = {}
+    _pools = {}
 
-    def __new__(cls, *args, **kwargs):
-        if not isinstance(cls._instance, cls):
-            cls._instance = object.__new__(cls, *args, **kwargs)
-        return cls._instance
+    def __init__(self, options):
+        self.pool_cls = ConnectionPool
+        self.redis_client_cls = StrictRedis
+        self.options = options
 
-    def __init__(self):
-        if not self.__pools:
-            self._create_pools()
+    def make_connection_params(self, url):
+        """
+        Given a main connection parameters, build a complete
+        dict of connection parameters.
+        """
 
-    def __getitem__(self, item):
-        return self.__pools[item]
+        kwargs = {
+            "url": url,
+            "parser_class": HiredisParser,
+        }
 
-    def __contains__(self, item):
-        return item in self.__pools
+        socket_timeout = self.options.get("SOCKET_TIMEOUT", None)
+        if socket_timeout:
+            assert isinstance(socket_timeout, (int, float)), \
+                "Socket timeout should be float or integer"
+            kwargs["socket_timeout"] = socket_timeout
 
-    def keys(self):
-        return self.__pools.keys()
+        socket_connect_timeout = self.options.get("SOCKET_CONNECT_TIMEOUT", None)
+        if socket_connect_timeout:
+            assert isinstance(socket_connect_timeout, (int, float)), \
+                "Socket connect timeout should be float or integer"
+            kwargs["socket_connect_timeout"] = socket_connect_timeout
 
-    @staticmethod
-    def _create_pool(_url, **kwargs):
-        return ConnectionPool.from_url(url=_url, parser_class=HiredisParser, **kwargs)
+        return kwargs
 
-    def _create_pools(self):
-        for backend in CACHES.values():
-            for _url in backend.get('LOCATION', []):
-                if _url not in self.__pools:
-                    self.__pools[_url] = self._create_pool(_url)
+    def connect(self, url):
+        """
+        Given a basic connection parameters,
+        return a new connection.
+        """
+        params = self.make_connection_params(url)
+        connection = self.get_connection(params)
+        return connection
 
-    def get_pools(self, urls):
-        return [self[index] for index in urls]
+    def get_connection(self, params):
+        """
+        Given a now preformated params, return a
+        new connection.
 
-    def connect(self, urls):
-        return {url: StrictRedis(connection_pool=self[url]) for url in urls}
+        The default implementation uses a cached pools
+        for create new connection.
+        """
+        pool = self.get_or_create_connection_pool(params)
+        return self.redis_client_cls(connection_pool=pool)
+
+    def get_or_create_connection_pool(self, params):
+        """
+        Given a connection parameters and return a new
+        or cached connection pool for them.
+
+        Reimplement this method if you want distinct
+        connection pool instance caching behavior.
+        """
+        key = params["url"]
+        if key not in self._pools:
+            self._pools[key] = self.get_connection_pool(params)
+        return self._pools[key]
+
+    def get_connection_pool(self, params):
+        """
+        Given a connection parameters, return a new
+        connection pool for them.
+
+        Overwrite this method if you want a custom
+        behavior on creating connection pool.
+        """
+        cp_params = dict(params)
+        pool = self.pool_cls.from_url(**cp_params)
+        if pool.connection_kwargs.get("password", None) is None:
+            pool.connection_kwargs["password"] = params.get("password", None)
+            pool.reset()
+        return pool
+
+
+def get_connection_factory(path=None, options=None):
+    return ConnectionFactory(options or {})

@@ -16,12 +16,12 @@ class ClientTestCase(TestCase):
         self.keys = {}
         for i in range(1, 5):
             _key = str(uuid.uuid4())
-            self.keys[_key] = self.client._get_pool_index(_key)
+            self.keys[_key] = self.client.get_server_name(_key)
             self.client.set(_key, str(uuid.uuid4())*random.randint(2, 10))
 
     def test_get_pool_index(self):
         for key, index in self.keys.items():
-            self.assertEqual(self.client._get_pool_index(key), index)
+            self.assertEqual(self.client.get_server_name(key), index)
 
     def test__get(self):
         for key, index in self.keys.items():
