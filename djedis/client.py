@@ -120,7 +120,8 @@ class ShardClient(object):
         return _keys
 
     def delete_pattern(self, pattern):
-        return self.delete_many(self.keys(pattern))
+        for client in self._pool.values():
+            client.delete(*set(client.keys(pattern)))
 
     def has_key(self, key, version=None):
         key = make_key(key, version=version)

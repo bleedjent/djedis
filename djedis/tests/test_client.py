@@ -47,3 +47,9 @@ class ClientTestCase(TestCase):
         _delete_key = random.choice(self.keys.keys())
         self.client.delete(_delete_key)
         self.assertIsNone(self.client.get(_delete_key))
+
+    def test__delete_many(self):
+        self.client.set_many(self.keys)
+
+        self.client.delete_many(self.keys.keys())
+        self.assertTrue(any(v in None for v in self.client.get_many(self.keys.keys()).values()))
