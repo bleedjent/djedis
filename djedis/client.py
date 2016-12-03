@@ -1,5 +1,6 @@
 import cPickle as pickle
 import snappy
+from collections import defaultdict
 
 from .pool import RedisPoolFactory
 from .settings import DEFAULT_TIMEOUT, DEFAULT_MIN_LENGTH_COMPRESS
@@ -91,10 +92,18 @@ class ShardClient(object):
             self.set(key, value, timeout, version=version)
 
     def get_many(self, keys, version=None):
-        _result = []
+        _result = {}
+        # prepare all keys
         keys = tuple(make_key(key, version=version) for key in keys)
-        for client in self._pool.values():
-            _result.extend([self._decode(v) for v in client.mget(keys)])
+        # filter by nodes
+        _key_nodes = defaultdict(list)
+        for _key in keys:
+            _key_nodes[self.get_server_name(_key)].append(_key)
+
+        for server, client in self._pool.items():
+            _keys = _key_nodes.get(server, None)
+            if _keys is not None:
+                _result.update(dict(zip(_keys, [self._decode(v) for v in client.mget(keys)])))
         return _result
 
     def delete_many(self, keys, version=None):

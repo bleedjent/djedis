@@ -19,13 +19,20 @@ class ClientTestCase(TestCase):
             self.keys[_key] = self.client.get_server_name(_key)
             self.client.set(_key, str(uuid.uuid4())*random.randint(2, 10))
 
-    def test_get_pool_index(self):
+    def test_get_server_name(self):
         for key, index in self.keys.items():
             self.assertEqual(self.client.get_server_name(key), index)
 
     def test__get(self):
         for key, index in self.keys.items():
             self.assertIsNotNone(self.client.get(key))
+
+    def test__get_many(self):
+        self.client.set_many(self.keys)
+        result = self.client.get_many(self.keys.keys())
+        self.assertIsInstance(result, dict)
+        self.assertTrue(any(v in self.keys.values() or None for v in result.values()))
+        self.assertTrue(any(k in self.keys.keys() for k in result.keys()))
 
     def test__set(self):
         self.assertTrue(any(self.client.set(key, 'test_value') for key in self.keys.keys()))
