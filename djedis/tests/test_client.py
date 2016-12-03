@@ -23,6 +23,11 @@ class ClientTestCase(TestCase):
         for key, index in self.keys.items():
             self.assertEqual(self.client.get_server_name(key), index)
 
+    def test__has_key(self):
+        self.client.set('foo', 'test_value', 600)
+        self.assertTrue(self.client.has_key('foo'))
+        self.assertFalse(self.client.has_key('foo'*random.randint(2, 4)))
+
     def test__get(self):
         for key, index in self.keys.items():
             self.assertIsNotNone(self.client.get(key))
