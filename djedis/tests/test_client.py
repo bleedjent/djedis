@@ -50,6 +50,17 @@ class ClientTestCase(TestCase):
 
     def test__delete_many(self):
         self.client.set_many(self.keys)
-
         self.client.delete_many(self.keys.keys())
-        self.assertTrue(any(v in None for v in self.client.get_many(self.keys.keys()).values()))
+        self.assertTrue(any(v is None for v in self.client.get_many(self.keys.keys()).values()))
+
+    def test__delete_pattern(self):
+        _data = {'foo'+str(i): str(uuid.uuid4()) for i in range(0, 5)}
+
+        self.client.set_many(_data)
+        _check_data = self.client.get_many(_data.keys())
+        self.assertTrue(any(k in _data for k in _check_data.keys()))
+        self.assertTrue(any(v in _data.values() for v in _check_data.values()))
+
+        self.client.delete_pattern('foo*')
+        _check_data = self.client.get_many(_data.keys())
+        self.assertTrue(any(v is None for v in _check_data.values()))
