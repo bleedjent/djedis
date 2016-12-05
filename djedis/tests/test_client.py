@@ -71,3 +71,10 @@ class ClientTestCase(TestCase):
         self.client.clear()
         for _key in self.keys:
             self.assertIsNone(self.client.get(_key))
+
+    def test__incr(self):
+        self.client.set('foo', 1)
+        self.client.incr('foo')
+        self.assertEqual(self.client.get('foo'), 2)
+        self.assertEqual(self.client.incr('foo', 2), 4)
+        self.assertEqual(2, self.client.incr('foo2', 2))

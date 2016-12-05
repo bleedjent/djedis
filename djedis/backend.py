@@ -53,3 +53,9 @@ class RedisCache(BaseCache):
 
     def clear(self):
         return self.client.clear()
+
+    def incr(self, key, delta=1, version=None):
+        return self.client.incr(key, delta, version=version)
+
+    def decr(self, key, delta=1, version=None):
+        return self.incr(key, -delta, version=version)

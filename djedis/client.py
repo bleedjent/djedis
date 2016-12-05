@@ -131,3 +131,8 @@ class ShardClient(object):
     def clear(self):
         for client in self._pool.values():
             client.flushall()
+
+    def incr(self, key, delta=1, version=None):
+        key = make_key(key, version=version)
+        client = self.get_client(key)
+        return client.incr(key, delta)
