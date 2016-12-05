@@ -50,3 +50,6 @@ class RedisCache(BaseCache):
 
     def keys(self, *args, **kwargs):
         return self.client.keys(*args, **kwargs)
+
+    def clear(self):
+        return self.client.clear()

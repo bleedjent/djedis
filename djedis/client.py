@@ -127,3 +127,7 @@ class ShardClient(object):
         key = make_key(key, version=version)
         client = self.get_client(key)
         return client.get(key) is not None
+
+    def clear(self):
+        for client in self._pool.values():
+            client.flushall()

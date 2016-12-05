@@ -64,3 +64,10 @@ class ClientTestCase(TestCase):
         self.client.delete_pattern('foo*')
         _check_data = self.client.get_many(_data.keys())
         self.assertTrue(any(v is None for v in _check_data.values()))
+
+    def test__clear(self):
+        for _key in self.keys:
+            self.assertIsNotNone(self.client.get(_key))
+        self.client.clear()
+        for _key in self.keys:
+            self.assertIsNone(self.client.get(_key))
