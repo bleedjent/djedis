@@ -14,7 +14,7 @@ class ClientTestCase(TestCase):
             params=self.default_params['OPTIONS']
         )
         self.keys = {}
-        for i in range(1, 5000):
+        for i in range(1, 500):
             _key = 'prefix:%s' % str(uuid.uuid4())
             self.keys[_key] = self.client.get_server_name(_key)
             self.client.set(_key, str(uuid.uuid4())*random.randint(2, 10))
