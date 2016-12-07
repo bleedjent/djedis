@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from .pool import RedisPoolFactory
 from .settings import DEFAULT_TIMEOUT, DEFAULT_MIN_LENGTH_COMPRESS
-from .utils import make_key, integer_types, batch
+from .utils import make_key, integer_types
 from .hash_ring import HashRing
 
 

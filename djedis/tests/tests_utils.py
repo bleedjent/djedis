@@ -3,7 +3,7 @@ import uuid
 import random
 from unittest import TestCase
 
-from djedis.utils import make_key, KeysHandler
+from djedis.utils import make_key
 from djedis.client import ShardClient
 from djedis.settings import CACHES, DEFAULT_CACHES
 
