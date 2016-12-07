@@ -15,7 +15,7 @@ class ClientTestCase(TestCase):
         )
         self.keys = {}
         for i in range(1, 5):
-            _key = str(uuid.uuid4())
+            _key = 'prefix:%s' % str(uuid.uuid4())
             self.keys[_key] = self.client.get_server_name(_key)
             self.client.set(_key, str(uuid.uuid4())*random.randint(2, 10))
 
@@ -78,3 +78,11 @@ class ClientTestCase(TestCase):
         self.assertEqual(self.client.get('foo_incr'), 2)
         self.assertEqual(self.client.incr('foo_incr', 2), 4)
         self.assertEqual(2, self.client.incr('foo_incr2', 2))
+
+    def test__keys(self):
+        self.client.set_many(self.keys)
+        keys_result = self.client.keys('prefix:*')
+        self.assertTrue(any(key in self.keys for key in keys_result))
+
+    def tearDown(self):
+        self.client.clear()

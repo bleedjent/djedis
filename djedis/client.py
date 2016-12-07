@@ -114,19 +114,14 @@ class ShardClient(object):
         return res
 
     def keys(self, pattern='*'):
-        return {server: client.scan_iter(match=pattern) for server, client in self._pool.items()}
+        for server, client in self._pool.items():
+            for key in client.scan_iter(match=pattern):
+                yield key
 
     def delete_pattern(self, pattern):
-        for server, generator in self.keys(pattern).items():
-            keys = []
-            counter, limit = 0, 30
-            for key in generator:
-                keys.append(key)
-                counter += 1
-                if limit <= counter:
-                    self._pool[server].delete(*keys)
-                    counter = 0
-                    keys = []
+        for key in self.keys(pattern):
+            client = self.get_client(key)
+            client.delete(*(key,))
 
     def has_key(self, key, version=None):
         key = make_key(key, version=version)

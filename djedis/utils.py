@@ -18,3 +18,21 @@ def batch(iterable, n=1):
     l = len(iterable)
     for ndx in range(0, l, n):
         yield iterable[ndx:min(ndx + n, l)]
+
+
+class KeysHandler(object):
+
+    def __init__(self, data, client):
+        self._data = data
+        self._client = client
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        for server, _gen in self._data.items():
+            for key in _gen:
+                yield key
+
+    def __next__(self):  # for python 3 support
+        return self.next()
