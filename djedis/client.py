@@ -116,7 +116,7 @@ class ShardClient(object):
     def keys(self, pattern='*'):
         _keys = set()
         for client in self._pool.values():
-            _keys.update(client.keys(pattern))
+            _keys.update(client.scan(match=pattern))
         return _keys
 
     def delete_pattern(self, pattern):
