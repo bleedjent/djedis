@@ -73,8 +73,8 @@ class ClientTestCase(TestCase):
             self.assertIsNone(self.client.get(_key))
 
     def test__incr(self):
-        self.client.set('foo', 1)
-        self.client.incr('foo')
-        self.assertEqual(self.client.get('foo'), 2)
-        self.assertEqual(self.client.incr('foo', 2), 4)
-        self.assertEqual(2, self.client.incr('foo2', 2))
+        self.client.set('foo_incr', 1)
+        self.client.incr('foo_incr')
+        self.assertEqual(self.client.get('foo_incr'), 2)
+        self.assertEqual(self.client.incr('foo_incr', 2), 4)
+        self.assertEqual(2, self.client.incr('foo_incr2', 2))

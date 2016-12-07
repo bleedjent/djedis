@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from .pool import RedisPoolFactory
 from .settings import DEFAULT_TIMEOUT, DEFAULT_MIN_LENGTH_COMPRESS
-from .utils import make_key, integer_types
+from .utils import make_key, integer_types, batch
 from .hash_ring import HashRing
 
 
@@ -110,18 +110,23 @@ class ShardClient(object):
         res = 0
         keys = tuple(make_key(key, version=version) for key in keys)
         for client in self._pool.values():
-            res += client.delete(*keys)
+            res += client.delete(*set(keys))
         return res
 
     def keys(self, pattern='*'):
-        _keys = set()
-        for client in self._pool.values():
-            _keys.update(key for key in client.scan_iter(match=pattern))
-        return _keys
+        return {server: client.scan_iter(match=pattern) for server, client in self._pool.items()}
 
     def delete_pattern(self, pattern):
-        for client in self._pool.values():
-            client.delete(*set(client.keys(pattern)))
+        for server, generator in self.keys(pattern).items():
+            keys = []
+            counter, limit = 0, 30
+            for key in generator:
+                keys.append(key)
+                counter += 1
+                if limit <= counter:
+                    self._pool[server].delete(*keys)
+                    counter = 0
+                    keys = []
 
     def has_key(self, key, version=None):
         key = make_key(key, version=version)
