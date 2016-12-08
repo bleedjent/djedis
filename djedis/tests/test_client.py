@@ -42,6 +42,11 @@ class ClientTestCase(TestCase):
     def test__set(self):
         self.assertTrue(any(self.client.set(key, 'test_value') for key in self.keys.keys()))
         self.assertTrue(any(self.client.get(key) == 'test_value' for key in self.keys.keys()))
+        self.client.set('foo_boolean_true', True)
+        self.client.set('foo_boolean_false', False)
+
+        self.assertEqual(self.client.get('foo_boolean_true'), True)
+        self.assertEqual(self.client.get('foo_boolean_false'), False)
 
     def test__delete(self):
         _delete_key = random.choice(self.keys.keys())
