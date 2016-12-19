@@ -87,6 +87,10 @@ class ShardClient(object):
         client = self.get_client(key)
         return client.delete(*(key,))
 
+    def publish(self, channel, msg):
+        client = self.get_client(channel)
+        return client.publish(channel, msg)
+
     #  batch commands
     def set_many(self, data, timeout=DEFAULT_TIMEOUT, version=None):
         for key, value in data.items():
