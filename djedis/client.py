@@ -1,4 +1,3 @@
-import cPickle as pickle
 import snappy
 from collections import defaultdict
 
@@ -6,6 +5,11 @@ from .pool import RedisPoolFactory
 from .settings import DEFAULT_TIMEOUT, DEFAULT_MIN_LENGTH_COMPRESS
 from .utils import make_key, integer_types
 from .hash_ring import HashRing
+
+try:
+    import cPickle as pickle
+except (ImportError,):
+    import pickle
 
 
 class ShardClient(object):
